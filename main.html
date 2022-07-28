@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> CANVAS </title>
+
+    <script type="text/javascript">
+        //polygon data
+        data = '{"A":[{"x": 0, "y": 33}, {"x": -15, "y": 33}, {"x": -15, "y": 24.5}, {"x": 0, "y": 24.5}], "B":[{"x": 0, "y": 40}, {"x": 38, "y": 27}, {"x": 32, "y": -6.1}, {"x": 22, "y": 27}, {"x": 0, "y": 1.5}], "C":[{"x": 22, "y": 27}, {"x": 32, "y": -6.1}, {"x": 24.3, "y": -30}, {"x": 0, "y": -3}, {"x": 0, "y": 1.5}], "D":[{"x": 0, "y": -3}, {"x": 24.3, "y": -30}, {"x": 23.5, "y": -37.8}, {"x": 1, "y": -36.2}, {"x": -6, "y": -4}], "E":[{"x": -6, "y": -4}, {"x": 1, "y": -36.2}, {"x": -22.5, "y": -32.4}], "F":[{"x": -6, "y": -4}, {"x": -22.5, "y": -32.4}, {"x": -23.5, "y": -32.4}, {"x": -35, "y": 3}, {"x": 0, "y": 1.5}, {"x": 0, "y": -3}],"S":[{"x": 0, "y": 1.5}, {"x": -35, "y": 3.1}, {"x": -38, "y": 33}, {"x": 0, "y": 40}, {"x": 0, "y": 33}, {"x": 0, "y": 24.5}] }'
+        //random point
+        whereLocation = '{"Point":{"x":-20, "y": -29}}'
+
+        let mydata = JSON.parse(data);
+        let pos = JSON.parse(whereLocation);
+
+        var key_length = Object.keys(mydata).length;
+        var value_length;
+
+        function start() {
+            var ctx = document.getElementById('myCanvas').getContext('2d');
+            if (!ctx)
+                return;
+
+            //paint polygon
+            for (var i = 0; i < key_length; i++) {
+                console.log(Object.keys(mydata)[i]);
+                value_length = Object.values(mydata)[i].length;
+                ctx.beginPath();
+
+                for (var j = 0; j < value_length; j++) {
+                    console.log(Object.values(mydata)[i][j]);
+                    var x_Posiion = (Object.values(mydata)[i][j].x + 38) * 10;
+                    var y_Posiion = (Object.values(mydata)[i][j].y + 38) * 10;
+
+                    if (i == 0 && j == 0)
+                        ctx.moveTo(x_Posiion, y_Posiion);
+                    else
+                        ctx.lineTo(x_Posiion, y_Posiion);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+            var pos_x = Object.values(pos)[0].x;
+            var pos_y = Object.values(pos)[0].y;
+            //put_a_dot(pos_x, pos_y);
+
+        }
+
+        function put_a_dot(pos_x, pos_y) {
+            var ctx = document.getElementById('myCanvas').getContext('2d');
+            if (!ctx)
+                return;
+            //dot point
+            ctx.beginPath();
+            ctx.arc((pos_x + 38) * 10, (pos_y + 38) * 10, 3, 0, 2 * Math.PI, true);
+            ctx.stroke();
+            ctx.fillStyle = "red"
+            ctx.fill();
+            ctx.closePath();
+            check_dot_inside(pos_x, pos_y);
+        }
+
+
+        function check_dot_inside(pos_x, pos_y) {
+            //find out polygon d
+            var checkInside = [];
+            for (var i = 0; i < key_length; i++)
+                checkInside[i] = true;
+
+            for (var i = 0; i < key_length; i++) {
+                var x_cnt = 0;
+                var y_cnt = 0;
+                for (var j = 0; j < Object.values(mydata)[i].length; j++) {
+                    if (Object.values(mydata)[i][j].x < pos_x)
+                        x_cnt += 1;
+                    if (Object.values(mydata)[i][j].y < pos_y)
+                        y_cnt += 1;
+                }
+
+                if (x_cnt == 0 || x_cnt == Object.values(mydata)[i].length)
+                    checkInside[i] = false;
+                if (y_cnt == 0 || y_cnt == Object.values(mydata)[i].length)
+                    checkInside[i] = false;
+                console.log(checkInside[i], Object.keys(mydata)[i]);
+            }
+
+            //calculate where is dot
+            for (var i = 0; i < key_length; i++) {
+                if (checkInside[i] == true) {
+                    var right_cnt = 0;
+                    var left_cnt = 0;
+                    value_length = Object.values(mydata)[i].length;
+                    Object.values(mydata)[i][value_length] = Object.values(mydata)[i][0];
+
+                    for (var j = 0; j < value_length; j++) {
+                        if ((Object.values(mydata)[i][j].y - pos_y) * (Object.values(mydata)[i][j + 1].y - pos_y) <= 0) {
+                            var x_delta = Object.values(mydata)[i][j + 1].x - Object.values(mydata)[i][j].x;
+                            var y_delta = Object.values(mydata)[i][j + 1].y - Object.values(mydata)[i][j].y;
+                            var a = y_delta / x_delta;
+                            var b;
+                            var rl_check_x;
+
+                            if (x_delta == 0)
+                                lr_check_x = Object.values(mydata)[i][j + 1].x;
+                            else if (y_delta == 0)
+                                break;
+                            else {
+                                b = Object.values(mydata)[i][j].y - a * Object.values(mydata)[i][j].x;
+                                lr_check_x = (pos_y - b) / a
+                            }
+
+                            if (lr_check_x < pos_x)
+                                left_cnt += 1;
+                            else
+                                right_cnt += 1;
+                        }
+                    }
+                    console.log(Object.keys(mydata)[i] + " left:" + left_cnt + " right:" + right_cnt)
+                    if (left_cnt % 2 == 0 || right_cnt % 2 == 0)
+                        checkInside[i] = false;
+                }
+                if (checkInside[i] == true)
+                    console.log("The Point is in the " + Object.keys(mydata)[i] + " Location");
+            }
+        }
+
+        function draw() {
+            btn = document.getElementById('btn1');
+            var ctx = document.getElementById('myCanvas').getContext('2d');
+            if (!ctx)
+                return;
+            
+            ctx.clearRect(0, 0, ctx.width, ctx.height);
+            var pos_x = parseInt(document.getElementById('input_1').value);
+            var pos_y = parseInt(document.getElementById('input_2').value);
+            //console.log("draw() "+ pos_x + " " + pos_y);
+
+            ctx.beginPath();
+            pos_xx = (pos_x + 38) * 10;
+            pos_yy = (pos_y + 38) * 10;
+            ctx.arc(pos_xx, pos_yy, 3, 0, 2 * Math.PI, true);
+    
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fillStyle = "blue"
+            ctx.fill();
+
+            check_dot_inside(pos_x, pos_y);
+        }
+
+    </script>
+
+</head>
+
+<body onload="start();">
+    <div style="align-items:center" >
+    <p></p>
+    </div>
+    <form name="input_form" method="post">
+        <label style="font-size:30px; width:50px;">x : </label> <input type="text" id="input_1" value="14" style="font-size:30px; width:50px;">
+        <label style="font-size:30px; width:50px;">,  y : </label> <input type="text" id="input_2" value="14" style="font-size:30px; width:50px;">
+        <input type="button" id="btn1" value="입력" onclick=draw() style="font-size:25px; width:100px;">
+    </form>
+    <p></p>
+    <canvas id="myCanvas" width="1280" height="960">
+        당신의 브라우저는 canvas 요소를 지원하지 않습니다.
+    </canvas>
+
+</body>
+
+</html>
