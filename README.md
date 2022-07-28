@@ -1,4 +1,4 @@
-# dotisinpolygon
+# DotisinPolygon
 
 If you have polygon data in JSON, You can know dot is in what polgyon. 
 
